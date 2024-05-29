@@ -26,6 +26,7 @@ import { LoginRequestSchema } from "@/shared/validations/login";
 import { useAuth } from "@/context/auth-provider";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/services/logger/logger";
 
 export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,9 +66,11 @@ export function LoginForm() {
       }
 
       router.push("/dashboard");
-    } catch {
+    } catch (error) {
       // In a real case scenario, you would want to log this error to an error tracking service
-      console.error("Error logging in");
+      if (error instanceof Error) {
+        logger.logError(error);
+      }
 
       form.setError("username", {
         message: "An error occurred",

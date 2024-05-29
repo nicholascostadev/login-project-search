@@ -8,6 +8,7 @@ import React, {
 
 import { LoginRequestSchema } from "@/shared/validations/login";
 import { z } from "zod";
+import { logger } from "@/services/logger/logger";
 
 type User = {
   username: string;
@@ -40,9 +41,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (parsedUser) {
         setUser(parsedUser);
       }
-    } catch {
+    } catch (error) {
       // In a real case scenario, you would want to log this error to an error tracking service
-      console.error("Error parsing user from local storage");
+      if (error instanceof Error) {
+        logger.logError(error);
+      }
       localStorage.removeItem("user");
     } finally {
       setIsPending(false);
