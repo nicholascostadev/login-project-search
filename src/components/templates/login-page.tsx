@@ -21,7 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
+} from "../ui/form";
 import { LoginRequestSchema } from "@/shared/validations/login";
 import { useAuth } from "@/context/auth-provider";
 import { useEffect, useState } from "react";
