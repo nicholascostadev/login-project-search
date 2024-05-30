@@ -56,7 +56,9 @@ export default function Home() {
 
               <CardFooter>
                 <Button asChild className="w-full" type="submit">
-                  <Link href={`/projects/${project.id}`}>View Project</Link>
+                  <Link href={`/dashboard/projects/${project.id}`}>
+                    View Project
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
