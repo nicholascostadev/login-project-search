@@ -17,7 +17,14 @@ import { Loader2 } from "lucide-react";
 export default function ProjectPage() {
   const router = useRouter();
   const { user, isPending } = useAuth();
+  const [search, setSearch] = useState("");
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
+
+  const [content, setContent] = useState("");
+
+  useEffect(() => {
+    setContent(selectedChapter.content);
+  }, [selectedChapter.content]);
 
   useEffect(() => {
     if (!isPending && !user) {
@@ -61,7 +68,7 @@ export default function ProjectPage() {
 
           <h1 className="text-4xl font-bold">{selectedChapter.title}</h1>
 
-          <RichTextEditor content={selectedChapter.content} />
+          <RichTextEditor content={content} />
         </>
       ) : null}
     </main>
