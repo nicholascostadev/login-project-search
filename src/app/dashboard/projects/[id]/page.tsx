@@ -27,7 +27,7 @@ type Params = {
 
 export default function ProjectPage({ params }: { params: Params }) {
   const router = useRouter();
-  const { user, isPending } = useAuth();
+  const { user, isPending: isPendingUser } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
   const [internalSearch, setInternalSearch] = useState("");
@@ -38,10 +38,16 @@ export default function ProjectPage({ params }: { params: Params }) {
   );
 
   useEffect(() => {
-    if (!isPending && !user) {
+    if (!isPendingUser && !user) {
       router.push("/");
     }
-  }, [isPending, router, user]);
+  }, [isPendingUser, router, user]);
+
+  useEffect(() => {
+    if (!isPendingUser && !user) {
+      router.push("/");
+    }
+  }, [isPendingUser, router, user]);
 
   const filteredChaptersBySearch = chapters.filter(
     (chapter) =>
@@ -51,7 +57,7 @@ export default function ProjectPage({ params }: { params: Params }) {
 
   return (
     <main className="flex container min-h-screen flex-col items-start justify-start py-10 gap-16">
-      {isPending || isFetchingProject ? (
+      {isPendingUser || isFetchingProject ? (
         <LoadingProject />
       ) : user ? (
         <>
