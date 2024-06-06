@@ -30,9 +30,11 @@ import {
   List,
   ListOrdered,
   Quote,
+  Redo,
   Search as SearchIcon,
   Strikethrough,
   Type,
+  Undo,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Label } from "../ui/label";
@@ -90,7 +92,7 @@ function MenuBar({ initialSearch, prefilledChapter }: MenuBarProps) {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefilledChapter]);
+  }, [prefilledChapter, initialSearch]);
 
   if (!editor) {
     return null;
@@ -146,49 +148,71 @@ function MenuBar({ initialSearch, prefilledChapter }: MenuBarProps) {
       label: "Bold",
       onClick: () => editor.chain().focus().toggleBold().run(),
       isActive: editor.isActive("bold"),
+      disabled: !editor.can().toggleBold(),
       icon: <Bold className="size-4" />,
     },
     {
       label: "Italic",
       onClick: () => editor.chain().focus().toggleItalic().run(),
       isActive: editor.isActive("italic"),
+      disabled: !editor.can().toggleItalic(),
       icon: <Italic className="size-4" />,
     },
     {
       label: "Strikethrough",
       onClick: () => editor.chain().focus().toggleStrike().run(),
       isActive: editor.isActive("strike"),
+      disabled: !editor.can().toggleStrike(),
       icon: <Strikethrough className="size-4" />,
     },
     {
       label: "Bullet List",
       onClick: () => editor.chain().focus().toggleBulletList().run(),
       isActive: editor.isActive("bulletList"),
+      disabled: !editor.can().toggleBulletList(),
       icon: <List className="size-4" />,
     },
     {
       label: "Ordered List",
       onClick: () => editor.chain().focus().toggleOrderedList().run(),
       isActive: editor.isActive("orderedList"),
+      disabled: !editor.can().toggleOrderedList(),
       icon: <ListOrdered className="size-4" />,
     },
     {
       label: "Code",
       onClick: () => editor.chain().focus().toggleCode().run(),
       isActive: editor.isActive("code"),
+      disabled: !editor.can().toggleCode(),
       icon: <Code className="size-4" />,
     },
     {
       label: "Code Block",
       onClick: () => editor.chain().focus().toggleCodeBlock().run(),
       isActive: editor.isActive("codeBlock"),
+      disabled: !editor.can().toggleCodeBlock(),
       icon: <CodeXml className="size-4" />,
     },
     {
       label: "Blockquote",
       onClick: () => editor.chain().focus().toggleBlockquote().run(),
       isActive: editor.isActive("blockquote"),
+      disabled: !editor.can().toggleBlockquote(),
       icon: <Quote className="size-4" />,
+    },
+    {
+      label: "Undo",
+      onClick: () => editor.chain().focus().undo().run(),
+      isActive: false,
+      disabled: !editor.can().undo(),
+      icon: <Undo className="size-4" />,
+    },
+    {
+      label: "Redo",
+      onClick: () => editor.chain().focus().redo().run(),
+      isActive: false,
+      disabled: !editor.can().redo(),
+      icon: <Redo className="size-4" />,
     },
   ];
 
@@ -285,6 +309,7 @@ function MenuBar({ initialSearch, prefilledChapter }: MenuBarProps) {
           onClick={option.onClick}
           className="data-[is-active=true]:bg-zinc-100"
           data-is-active={option.isActive}
+          disabled={option.disabled}
         >
           {option.icon}
         </Button>

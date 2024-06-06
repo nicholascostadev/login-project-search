@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/auth-provider";
 import { useRouter } from "next/navigation";
 import { Loader2, Search } from "lucide-react";
@@ -17,13 +17,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ChapterPreview } from "@/components/chapter-preview";
-import { flushSync } from "react-dom";
 import { cn } from "@/lib/utils";
+import { flushSync } from "react-dom";
 
 export default function ProjectPage() {
   const router = useRouter();
   const { user, isPending } = useAuth();
-  const [fuzzySearch, setFuzzySearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [search, setSearch] = useState("");
+  const [internalSearch, setInternalSearch] = useState("");
   const [isFuzzySearchDialogOpen, setIsFuzzySearchDialogOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
 
@@ -35,12 +37,12 @@ export default function ProjectPage() {
 
   const filteredChaptersBySearch = chapters.filter(
     (chapter) =>
-      chapter.title.toLowerCase().includes(fuzzySearch.toLowerCase()) ||
-      chapter.content.toLowerCase().includes(fuzzySearch.toLowerCase())
+      chapter.title.toLowerCase().includes(internalSearch.toLowerCase()) ||
+      chapter.content.toLowerCase().includes(internalSearch.toLowerCase())
   );
 
   return (
-    <main className="flex container min-h-screen flex-col items-start justify-start py-10 gap-4">
+    <main className="flex container min-h-screen flex-col items-start justify-start py-10 gap-16">
       {isPending ? (
         <LoadingProject />
       ) : user ? (
@@ -80,10 +82,10 @@ export default function ProjectPage() {
                   // waiting for dialog to close before clearing search
                   // avoiding a layout shift
                   if (open) {
-                    setFuzzySearch("");
+                    setInternalSearch("");
                   } else if (!open) {
                     setTimeout(() => {
-                      setFuzzySearch("");
+                      setInternalSearch("");
                     }, 150);
                   }
                 }}
@@ -97,8 +99,9 @@ export default function ProjectPage() {
                   <div className="flex flex-col gap-2 p-6">
                     <strong>Search through all chapters</strong>
                     <Input
-                      value={fuzzySearch}
-                      onChange={(e) => setFuzzySearch(e.target.value)}
+                      ref={inputRef}
+                      value={internalSearch}
+                      onChange={(e) => setInternalSearch(e.target.value)}
                       type="text"
                       placeholder="Fuzzy search chapters"
                     />
@@ -121,12 +124,14 @@ export default function ProjectPage() {
                         id={chapter.id}
                         title={chapter.title}
                         description={chapter.content}
-                        search={fuzzySearch}
+                        search={internalSearch}
                         onClick={() => {
                           flushSync(() => {
-                            setSelectedChapter(chapter);
-                            setIsFuzzySearchDialogOpen(false);
+                            setSearch(internalSearch);
                           });
+
+                          setSelectedChapter(chapter);
+                          setIsFuzzySearchDialogOpen(false);
                         }}
                       />
                     ))}
@@ -136,12 +141,14 @@ export default function ProjectPage() {
             </div>
           </div>
 
-          <h1 className="text-4xl font-bold">{selectedChapter.title}</h1>
+          <div className="flex flex-col gap-4">
+            <h1 className="text-4xl font-bold">{selectedChapter.title}</h1>
 
-          <RichTextEditor
-            initialSearch={fuzzySearch}
-            prefilledChapter={selectedChapter}
-          />
+            <RichTextEditor
+              initialSearch={search}
+              prefilledChapter={selectedChapter}
+            />
+          </div>
         </>
       ) : null}
     </main>
