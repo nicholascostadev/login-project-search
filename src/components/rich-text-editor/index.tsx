@@ -5,11 +5,7 @@ import "./styles.scss";
 import { Color } from "@tiptap/extension-color";
 import ListItem from "@tiptap/extension-list-item";
 import TextStyle from "@tiptap/extension-text-style";
-import {
-  ChainedCommands,
-  EditorProvider,
-  useCurrentEditor,
-} from "@tiptap/react";
+import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import React, { useEffect, useRef, useState } from "react";
@@ -34,34 +30,46 @@ import {
   List,
   ListOrdered,
   Quote,
-  Redo,
   Search as SearchIcon,
   Strikethrough,
   Type,
-  Undo,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { useAddDocumentKeydown } from "@/hooks/useAddDocumentKeydown";
 
 function MenuBar({ content }: { content: string }) {
   const [search, setSearch] = useState("");
   const { editor } = useCurrentEditor();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const pressedEscTimes = useRef(0);
 
-  useEffect(() => {
-    document.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
-        e.preventDefault();
-        setIsSearchOpen(true);
+  useAddDocumentKeydown({
+    condition: (event) => (event.ctrlKey || event.metaKey) && event.key === "f",
+    callback: (event) => {
+      event.preventDefault();
+      setIsSearchOpen(true);
+    },
+  });
+
+  useAddDocumentKeydown({
+    condition: () => true,
+    callback: (e) => {
+      if (e.key === "Escape" && e.target == document.querySelector("body")) {
+        pressedEscTimes.current += 1;
+        if (pressedEscTimes.current >= 2) {
+          clearHighlight();
+          setSearch("");
+          pressedEscTimes.current = 0;
+        }
+        return;
       }
-    });
 
-    return () => {
-      document.removeEventListener("keydown", () => {});
-    };
-  }, []);
+      pressedEscTimes.current = 0;
+    },
+  });
 
   useEffect(() => {
     if (editor) {
@@ -119,6 +127,57 @@ function MenuBar({ content }: { content: string }) {
     },
   ];
 
+  const otherTextManipulationOptions = [
+    {
+      label: "Bold",
+      onClick: () => editor.chain().focus().toggleBold().run(),
+      isActive: editor.isActive("bold"),
+      icon: <Bold className="size-4" />,
+    },
+    {
+      label: "Italic",
+      onClick: () => editor.chain().focus().toggleItalic().run(),
+      isActive: editor.isActive("italic"),
+      icon: <Italic className="size-4" />,
+    },
+    {
+      label: "Strikethrough",
+      onClick: () => editor.chain().focus().toggleStrike().run(),
+      isActive: editor.isActive("strike"),
+      icon: <Strikethrough className="size-4" />,
+    },
+    {
+      label: "Bullet List",
+      onClick: () => editor.chain().focus().toggleBulletList().run(),
+      isActive: editor.isActive("bulletList"),
+      icon: <List className="size-4" />,
+    },
+    {
+      label: "Ordered List",
+      onClick: () => editor.chain().focus().toggleOrderedList().run(),
+      isActive: editor.isActive("orderedList"),
+      icon: <ListOrdered className="size-4" />,
+    },
+    {
+      label: "Code",
+      onClick: () => editor.chain().focus().toggleCode().run(),
+      isActive: editor.isActive("code"),
+      icon: <Code className="size-4" />,
+    },
+    {
+      label: "Code Block",
+      onClick: () => editor.chain().focus().toggleCodeBlock().run(),
+      isActive: editor.isActive("codeBlock"),
+      icon: <CodeXml className="size-4" />,
+    },
+    {
+      label: "Blockquote",
+      onClick: () => editor.chain().focus().toggleBlockquote().run(),
+      isActive: editor.isActive("blockquote"),
+      icon: <Quote className="size-4" />,
+    },
+  ];
+
   function CurrentSelectedHeading() {
     const selectedOption = headingOptions.find((option) => option.isActive);
 
@@ -136,14 +195,8 @@ function MenuBar({ content }: { content: string }) {
     );
   }
 
-  function onSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function highlightSearch(search: string) {
     if (!editor) return;
-
-    const value = e.target.value;
-    setSearch(value);
-
-    // remove all previous highlights
-    clearHighlight();
 
     const text = editor.getText();
     const positions: { from: number; to: number }[] = [];
@@ -151,10 +204,10 @@ function MenuBar({ content }: { content: string }) {
     // and save their positions
     for (let i = 0; i < text.length; i++) {
       if (
-        text.substring(i, i + value.length).toLowerCase() ===
-        value.toLowerCase()
+        text.substring(i, i + search.length).toLowerCase() ===
+        search.toLowerCase()
       ) {
-        positions.push({ from: i + 1, to: i + value.length + 1 });
+        positions.push({ from: i + 1, to: i + search.length + 1 });
       }
     }
 
@@ -167,6 +220,16 @@ function MenuBar({ content }: { content: string }) {
         .setMeta("addToHistory", false)
         .run();
     }
+  }
+
+  function onSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const searchValue = e.target.value;
+
+    setSearch(searchValue);
+    // remove all previous highlights
+    clearHighlight();
+
+    highlightSearch(searchValue);
   }
 
   function clearHighlight() {
@@ -201,90 +264,18 @@ function MenuBar({ content }: { content: string }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button
-        variant="outline"
-        onClick={() => {
-          editor.commands.toggleBold();
-        }}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("bold")}
-      >
-        <Bold className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("italic")}
-      >
-        <Italic className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("strike")}
-      >
-        <Strikethrough className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("bulletList")}
-      >
-        <List className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("orderedList")}
-      >
-        <ListOrdered className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleCode().run()}
-        disabled={!editor.can().chain().focus().toggleCode().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("code")}
-      >
-        <Code className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("codeBlock")}
-      >
-        <CodeXml className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className="data-[is-active=true]:bg-zinc-100"
-        data-is-active={editor.isActive("blockquote")}
-      >
-        <Quote className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().undo().run()}
-        disabled={!editor.can().chain().focus().undo().run()}
-      >
-        <Undo className="size-4" />
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => editor.chain().focus().redo().run()}
-        disabled={!editor.can().chain().focus().redo().run()}
-      >
-        <Redo className="size-4" />
-      </Button>
+      {otherTextManipulationOptions.map((option) => (
+        <Button
+          key={option.label}
+          variant="outline"
+          onClick={option.onClick}
+          className="data-[is-active=true]:bg-zinc-100"
+          data-is-active={option.isActive}
+        >
+          {option.icon}
+        </Button>
+      ))}
+
       <div className="flex gap-2 items-center justify-start">
         <Popover
           open={isSearchOpen}
@@ -310,10 +301,13 @@ function MenuBar({ content }: { content: string }) {
                 id="search"
                 ref={searchInputRef}
                 value={search}
+                defaultValue={search}
                 onChange={onSearchChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === "Escape") {
                     setIsSearchOpen(false);
+                    clearHighlight();
+                    highlightSearch(search);
                   }
                 }}
               />
@@ -351,9 +345,6 @@ export function RichTextEditor({ content }: { content: string }) {
   return (
     <div className="w-full">
       <EditorProvider
-        onTransaction={(props) => {
-          console.log(props);
-        }}
         slotBefore={<MenuBar content={content} />}
         extensions={extensions}
         content={content}
