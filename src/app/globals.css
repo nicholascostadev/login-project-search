@@ -70,43 +70,100 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-}
 
-mark {
-  @apply bg-yellow-300 text-black
-}
+  /* TipTap editor customization */
 
-ul {
-  @apply list-disc list-outside
-}
+  .tiptap {
+    @apply border border-gray-300 rounded-lg p-4 w-full min-h-[500px];
+  }
 
-ol {
-  @apply list-decimal list-outside
-}
+  .tiptap>*+* {
+    @apply mt-3;
+  }
 
-h1 {
-  @apply text-4xl font-bold
-}
+  .tiptap h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply leading-5;
+  }
 
-h2 {
-  @apply text-3xl font-bold
-}
+  .tiptap code {
+    @apply bg-gray-200 text-gray-600 rounded-md px-2
+  }
 
-h3 {
-  @apply text-2xl font-bold
-}
+  .tiptap pre code {
+    @apply bg-gray-900
+  }
 
-h4 {
-  @apply text-xl font-bold
-}
+  .tiptap pre {
+    @apply bg-gray-900 text-white font-[monospace] py-3 px-4 rounded-md
+  }
 
-h5 {
-  @apply text-lg font-bold
-} 
+  .tiptap pre code {
+    @apply text-inherit p-0 bg-none text-[0.8rem]
+  }
 
-h6 {
-  @apply text-base font-bold
+  .tiptap img {
+    @apply max-w-full h-auto
+  }
+
+  .tiptap blockquote {
+    @apply pl-4 border-l-2 border-l-gray-900
+  }
+
+  .tiptap hr {
+    @apply border-none border-t-2 border-gray-900
+  }
+
+  .tiptap h1 {
+    @apply text-4xl font-bold;
+  }
+
+  .tiptap h2 {
+    @apply text-3xl font-bold;
+  }
+
+  .tiptap h3 {
+    @apply text-2xl font-bold;
+  }
+
+  .tiptap h4 {
+    @apply text-xl font-bold;
+  }
+
+  .tiptap h5 {
+    @apply text-lg font-bold;
+  }
+
+  .tiptap h6 {
+    @apply text-base font-bold;
+  }
+
+  .tiptap p {
+    @apply text-base;
+  }
+
+  .tiptap mark {
+    @apply bg-yellow-300 text-black;
+  }
+
+  .tiptap ul,
+  ol {
+    @apply px-4;
+  }
+
+  .tiptap ul {
+    @apply list-disc list-outside;
+  }
+
+  .tiptap ol {
+    @apply list-decimal list-outside;
+  }
 }
