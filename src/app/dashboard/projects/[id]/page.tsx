@@ -19,8 +19,13 @@ import { Input } from "@/components/ui/input";
 import { ChapterPreview } from "@/components/chapter-preview";
 import { cn } from "@/lib/utils";
 import { flushSync } from "react-dom";
+import { useProjectById } from "@/hooks/queries/useProjectById";
 
-export default function ProjectPage() {
+type Params = {
+  id: string;
+};
+
+export default function ProjectPage({ params }: { params: Params }) {
   const router = useRouter();
   const { user, isPending } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +33,9 @@ export default function ProjectPage() {
   const [internalSearch, setInternalSearch] = useState("");
   const [isFuzzySearchDialogOpen, setIsFuzzySearchDialogOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
+  const { project, isPending: isFetchingProject } = useProjectById(
+    Number(params.id)
+  );
 
   useEffect(() => {
     if (!isPending && !user) {
@@ -43,11 +51,13 @@ export default function ProjectPage() {
 
   return (
     <main className="flex container min-h-screen flex-col items-start justify-start py-10 gap-16">
-      {isPending ? (
+      {isPending || isFetchingProject ? (
         <LoadingProject />
       ) : user ? (
         <>
           <div className="gap-2 flex flex-col">
+            <h1 className="text-4xl font-bold pb-8">{project?.title}</h1>
+
             <strong>Select a Chapter</strong>
 
             <div className="flex items-center justify-start gap-1">
