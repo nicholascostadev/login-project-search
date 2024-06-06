@@ -75,8 +75,8 @@
   }
 }
 
-.highlight {
-  @apply bg-yellow-500 text-black
+mark {
+  @apply bg-yellow-300 text-black
 }
 
 ul {

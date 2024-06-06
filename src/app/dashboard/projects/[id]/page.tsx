@@ -12,24 +12,32 @@ import {
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-provider";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ChapterPreview } from "@/components/chapter-preview";
+import { flushSync } from "react-dom";
+import { cn } from "@/lib/utils";
 
 export default function ProjectPage() {
   const router = useRouter();
   const { user, isPending } = useAuth();
+  const [fuzzySearch, setFuzzySearch] = useState("");
+  const [isFuzzySearchDialogOpen, setIsFuzzySearchDialogOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
-
-  const [content, setContent] = useState("");
-
-  useEffect(() => {
-    setContent(selectedChapter.content);
-  }, [selectedChapter.content]);
 
   useEffect(() => {
     if (!isPending && !user) {
       router.push("/");
     }
   }, [isPending, router, user]);
+
+  const filteredChaptersBySearch = chapters.filter(
+    (chapter) =>
+      chapter.title.toLowerCase().includes(fuzzySearch.toLowerCase()) ||
+      chapter.content.toLowerCase().includes(fuzzySearch.toLowerCase())
+  );
 
   return (
     <main className="flex container min-h-screen flex-col items-start justify-start py-10 gap-4">
@@ -40,34 +48,100 @@ export default function ProjectPage() {
           <div className="gap-2 flex flex-col">
             <strong>Select a Chapter</strong>
 
-            <Select
-              value={String(selectedChapter.id)}
-              onValueChange={(id) => {
-                const chapter = chapters.find(
-                  (chapter) => chapter.id === Number(id)
-                );
+            <div className="flex items-center justify-start gap-1">
+              <Select
+                value={String(selectedChapter.id)}
+                onValueChange={(id) => {
+                  const chapter = chapters.find(
+                    (chapter) => chapter.id === Number(id)
+                  );
 
-                if (!chapter) return;
+                  if (!chapter) return;
 
-                setSelectedChapter(chapter);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Theme" />
-              </SelectTrigger>
-              <SelectContent>
-                {chapters.map((chapter) => (
-                  <SelectItem key={chapter.id} value={String(chapter.id)}>
-                    {chapter.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  setSelectedChapter(chapter);
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  {chapters.map((chapter) => (
+                    <SelectItem key={chapter.id} value={String(chapter.id)}>
+                      {chapter.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Dialog
+                open={isFuzzySearchDialogOpen}
+                onOpenChange={(open) => {
+                  setIsFuzzySearchDialogOpen(open);
+                  // waiting for dialog to close before clearing search
+                  // avoiding a layout shift
+                  if (open) {
+                    setFuzzySearch("");
+                  } else if (!open) {
+                    setTimeout(() => {
+                      setFuzzySearch("");
+                    }, 150);
+                  }
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Search className="size-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="flex flex-col gap-6 max-h-[80%] p-0">
+                  <div className="flex flex-col gap-2 p-6">
+                    <strong>Search through all chapters</strong>
+                    <Input
+                      value={fuzzySearch}
+                      onChange={(e) => setFuzzySearch(e.target.value)}
+                      type="text"
+                      placeholder="Fuzzy search chapters"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {filteredChaptersBySearch.length === 0
+                        ? `No chapters found with given query`
+                        : `Found ${filteredChaptersBySearch.length} chapters`}
+                    </span>
+                  </div>
+
+                  <div
+                    className={cn(
+                      "max-h-[40%] overflow-auto border-t border-gray-300 py-4 flex flex-col gap-4 px-6",
+                      filteredChaptersBySearch.length === 0 && "border-t-0"
+                    )}
+                  >
+                    {filteredChaptersBySearch.map((chapter) => (
+                      <ChapterPreview
+                        key={chapter.id}
+                        id={chapter.id}
+                        title={chapter.title}
+                        description={chapter.content}
+                        search={fuzzySearch}
+                        onClick={() => {
+                          flushSync(() => {
+                            setSelectedChapter(chapter);
+                            setIsFuzzySearchDialogOpen(false);
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <h1 className="text-4xl font-bold">{selectedChapter.title}</h1>
 
-          <RichTextEditor content={content} />
+          <RichTextEditor
+            initialSearch={fuzzySearch}
+            prefilledChapter={selectedChapter}
+          />
         </>
       ) : null}
     </main>

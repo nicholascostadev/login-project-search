@@ -38,9 +38,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { useAddDocumentKeydown } from "@/hooks/useAddDocumentKeydown";
+import { Chapter } from "@/models/chapter";
 
-function MenuBar({ content }: { content: string }) {
-  const [search, setSearch] = useState("");
+type MenuBarProps = {
+  initialSearch: string;
+  prefilledChapter: Chapter;
+};
+
+function MenuBar({ initialSearch, prefilledChapter }: MenuBarProps) {
+  const [search, setSearch] = useState(initialSearch);
   const { editor } = useCurrentEditor();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -74,9 +80,17 @@ function MenuBar({ content }: { content: string }) {
   useEffect(() => {
     if (editor) {
       // update editor content whenever the base content changes
-      editor.chain().setContent(content).setMeta("addToHistory", false).run();
+      editor
+        .chain()
+        .setContent(prefilledChapter.content)
+        .setMeta("addToHistory", false)
+        .run();
+      highlightSearch(initialSearch);
+      setSearch(initialSearch);
     }
-  }, [content, editor]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefilledChapter]);
 
   if (!editor) {
     return null;
@@ -301,7 +315,6 @@ function MenuBar({ content }: { content: string }) {
                 id="search"
                 ref={searchInputRef}
                 value={search}
-                defaultValue={search}
                 onChange={onSearchChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === "Escape") {
@@ -334,20 +347,28 @@ const extensions = [
       newGroupDelay: 2000,
     },
   }),
-  Highlight.configure({
-    HTMLAttributes: {
-      class: "my-custom-class",
-    },
-  }),
+  Highlight.configure(),
 ];
 
-export function RichTextEditor({ content }: { content: string }) {
+type RichTextEditorProps = {
+  initialSearch: string;
+  prefilledChapter: Chapter;
+};
+
+export function RichTextEditor({
+  initialSearch,
+  prefilledChapter,
+}: RichTextEditorProps) {
   return (
     <div className="w-full">
       <EditorProvider
-        slotBefore={<MenuBar content={content} />}
+        slotBefore={
+          <MenuBar
+            initialSearch={initialSearch}
+            prefilledChapter={prefilledChapter}
+          />
+        }
         extensions={extensions}
-        content={content}
       />
     </div>
   );
